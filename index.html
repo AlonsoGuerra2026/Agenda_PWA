@@ -1,0 +1,1649 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mi Agenda">
+<meta name="application-name" content="Mi Agenda">
+<meta name="theme-color" content="#0b0e17" id="themeColorMeta">
+<meta name="description" content="Agenda Personal, Laboral y Estudiantil con alarmas en segundo plano">
+<meta name="msapplication-TileColor" content="#0b0e17">
+<meta name="msapplication-tap-highlight" content="no">
+<!-- PWA Manifest -->
+<link rel="manifest" href="./manifest.json">
+<!-- Iconos Apple -->
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="192x192" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="512x512" href="./icons/icon-512.png">
+<!-- Favicon -->
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+<link rel="shortcut icon" href="./icons/icon-192.png">
+<title>Agenda Personal &amp; Laboral</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0e17;--surface:#111520;--card:#171c2b;--border:#1f2535;
+  --primary:#38bdf8;--accent:#f59e0b;--rose:#f87171;--violet:#a78bfa;
+  --green:#34d399;--text:#e2e8f0;--muted:#64748b;--subtle:#94a3b8;
+  --mode-p:#34d399;--mode-l:#38bdf8;--mode-e:#a78bfa;
+  --g1:rgba(56,189,248,.07);--g2:rgba(167,139,250,.05);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;z-index:0;
+  background:radial-gradient(ellipse 70% 40% at 0% 0%,var(--g1) 0%,transparent 55%),
+             radial-gradient(ellipse 50% 50% at 100% 100%,var(--g2) 0%,transparent 60%);
+  pointer-events:none;}
+.wrap{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:0 1.4rem 5rem;}
+
+/* ── WELCOME BAR ── */
+.wb{background:linear-gradient(135deg,var(--card),var(--surface));border-bottom:1px solid var(--border);
+  padding:.8rem 1.6rem;display:flex;align-items:center;justify-content:space-between;
+  gap:.7rem;flex-wrap:wrap;position:sticky;top:0;z-index:700;backdrop-filter:blur(14px);}
+.wb-left{display:flex;align-items:center;gap:.9rem;}
+.logo-slot{width:48px;height:48px;border-radius:9px;border:2px dashed var(--border);
+  background:var(--surface);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;overflow:hidden;flex-shrink:0;transition:border-color .2s;position:relative;}
+.logo-slot:hover{border-color:var(--primary);}
+.logo-slot img{width:100%;height:100%;object-fit:contain;display:none;}
+.logo-ph{font-size:1.25rem;pointer-events:none;}
+.logo-slot input{position:absolute;inset:0;opacity:0;cursor:pointer;}
+.greeting{font-size:.67rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;font-family:'DM Mono',monospace;}
+.uname{font-family:'DM Serif Display',serif;font-size:1.15rem;line-height:1.1;}
+.uname span{color:var(--primary);font-style:italic;}
+.wb-right{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;}
+.mode-sel{display:flex;gap:.2rem;background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:.18rem;}
+.mbtn{font-family:'Syne',sans-serif;font-weight:700;font-size:.72rem;padding:.38rem .82rem;
+  border-radius:6px;border:none;cursor:pointer;transition:all .2s;background:none;color:var(--muted);}
+.mbtn.p.on{background:var(--mode-p);color:#000;}
+.mbtn.l.on{background:var(--mode-l);color:#000;}
+.mbtn.e.on{background:var(--mode-e);color:#fff;}
+.mbtn:hover{color:var(--text);}
+.wb-exit{background:var(--rose);color:#000;border:none;font-family:'Syne',sans-serif;font-weight:700;
+  font-size:.72rem;padding:.4rem .85rem;border-radius:7px;cursor:pointer;}
+.wb-exit:hover{opacity:.82;}
+
+/* ── HEADER ── */
+header{display:flex;align-items:flex-start;justify-content:space-between;
+  padding:1.6rem 0 1.4rem;border-bottom:1px solid var(--border);margin-bottom:1.6rem;gap:1rem;flex-wrap:wrap;}
+.hl h1{font-family:'DM Serif Display',serif;font-size:clamp(1.6rem,3vw,2.5rem);line-height:1.1;letter-spacing:-.02em;}
+.mtag{font-size:.48em;vertical-align:middle;margin-left:.45rem;padding:.16rem .6rem;
+  border-radius:20px;font-family:'Syne',sans-serif;font-weight:700;letter-spacing:.06em;}
+.mtag.p{background:var(--mode-p);color:#000;}
+.mtag.l{background:var(--mode-l);color:#000;}
+.mtag.e{background:var(--mode-e);color:#fff;}
+.hl p{color:var(--muted);font-size:.78rem;margin-top:.32rem;font-family:'DM Mono',monospace;}
+/* RELOJ */
+.clk{text-align:right;font-family:'DM Mono',monospace;cursor:pointer;user-select:none;}
+.clk .time{font-size:1.85rem;font-weight:500;color:var(--primary);letter-spacing:-.03em;line-height:1;transition:all .2s;}
+.clk .ampm{font-size:.85rem;color:var(--accent);margin-left:.3rem;font-weight:700;}
+.clk .dt{font-size:.71rem;color:var(--muted);margin-top:.22rem;}
+.clk .fmt-hint{font-size:.6rem;color:var(--muted);margin-top:.1rem;letter-spacing:.05em;}
+
+/* ── STATS ── */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:.75rem;margin-bottom:1.6rem;}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:11px;padding:.82rem .95rem;
+  position:relative;overflow:hidden;transition:transform .2s,border-color .2s;}
+.stat:hover{transform:translateY(-2px);border-color:var(--primary);}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--sc,var(--primary));}
+.sv{font-size:1.8rem;font-weight:800;color:var(--sc,var(--primary));line-height:1;}
+.sl{font-size:.65rem;color:var(--muted);margin-top:.26rem;text-transform:uppercase;letter-spacing:.08em;}
+
+/* ── BOTONES ── */
+.btn{font-family:'Syne',sans-serif;font-weight:600;font-size:.75rem;padding:.46rem .9rem;
+  border-radius:8px;border:1px solid var(--border);cursor:pointer;transition:all .2s;
+  background:var(--card);color:var(--subtle);}
+.btn:hover{border-color:var(--primary);color:var(--primary);}
+.btn.on{background:var(--primary);color:#000;border-color:var(--primary);}
+.bp{background:var(--primary);color:#000;border:none;font-family:'Syne',sans-serif;font-weight:700;
+  font-size:.81rem;padding:.55rem 1.2rem;border-radius:8px;cursor:pointer;transition:opacity .2s;}
+.bp:hover{opacity:.84;}
+.bc{background:none;border:1px solid var(--border);color:var(--muted);font-family:'Syne',sans-serif;
+  font-size:.81rem;padding:.55rem .95rem;border-radius:8px;cursor:pointer;}
+.bw{background:var(--accent);color:#000;border:none;font-family:'Syne',sans-serif;font-weight:700;
+  font-size:.78rem;padding:.55rem 1.1rem;border-radius:8px;cursor:pointer;transition:opacity .2s;}
+.bw:hover{opacity:.84;}
+.bcsv{background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border:none;font-family:'Syne',sans-serif;
+  font-weight:700;font-size:.75rem;padding:.42rem 1rem;border-radius:8px;cursor:pointer;transition:opacity .2s;}
+.bcsv:hover{opacity:.84;}
+
+/* ── CONTROLES ── */
+.ctrls{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.6rem;align-items:center;}
+.fgrp{display:flex;gap:.35rem;flex-wrap:wrap;}
+
+/* ── ACORDEÓN / SECCIONES ── */
+.acc-section{background:var(--card);border:1px solid var(--border);border-radius:13px;margin-bottom:1rem;overflow:hidden;}
+.acc-header{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.15rem;cursor:pointer;user-select:none;transition:background .15s;}
+.acc-header:hover{background:rgba(255,255,255,.03);}
+.acc-title{font-size:.82rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;display:flex;align-items:center;gap:.4rem;}
+.acc-arrow{font-size:.75rem;color:var(--muted);transition:transform .25s;}
+.acc-arrow.open{transform:rotate(180deg);}
+.acc-body{display:none;padding:0 1.15rem 1.15rem;animation:sd .22s ease;}
+.acc-body.open{display:block;}
+@keyframes sd{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+
+/* PANEL AGREGAR */
+.panel{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:1.25rem;
+  margin-bottom:1.6rem;display:none;animation:sd .22s ease;}
+.panel.on{display:block;}
+.ptitle{font-size:.84rem;margin-bottom:.9rem;letter-spacing:.06em;text-transform:uppercase;font-weight:700;display:flex;align-items:center;gap:.4rem;}
+
+/* FORMULARIOS */
+.fg{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:.6rem;}
+.ff{display:flex;flex-direction:column;gap:.26rem;}
+.ff label{font-size:.67rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;}
+.ff input,.ff select,.ff textarea{background:var(--surface);border:1px solid var(--border);
+  color:var(--text);font-family:'Syne',sans-serif;font-size:.8rem;padding:.5rem .78rem;
+  border-radius:7px;outline:none;transition:border-color .2s;}
+.ff input:focus,.ff select:focus,.ff textarea:focus{border-color:var(--primary);}
+.ff select option{background:var(--card);}
+.fac{display:flex;gap:.5rem;margin-top:.85rem;flex-wrap:wrap;align-items:center;}
+
+/* PERF INTERNOS */
+.psec{background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:.9rem;margin-bottom:.8rem;}
+.psec h4{font-size:.73rem;color:var(--primary);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.65rem;}
+.row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:flex-end;}
+.row .ff{flex:1;min-width:130px;}
+
+/* PALETA TEMAS */
+.swatch{width:22px;height:22px;border-radius:5px;border:2px solid transparent;cursor:pointer;transition:transform .17s,border-color .17s;flex-shrink:0;}
+.swatch:hover,.swatch.on{transform:scale(1.25);border-color:var(--text);}
+
+/* FONDO SELECTOR 3 OPCIONES */
+.bg-opts{display:flex;gap:.5rem;margin-top:.45rem;}
+.bg-opt{display:flex;flex-direction:column;align-items:center;gap:.3rem;cursor:pointer;padding:.35rem .6rem;border-radius:8px;border:1px solid var(--border);transition:border-color .2s;font-size:.68rem;color:var(--muted);}
+.bg-opt:hover{border-color:var(--primary);color:var(--primary);}
+.bg-opt.on{border-color:var(--primary);color:var(--primary);}
+.bg-swatch{width:30px;height:30px;border-radius:6px;border:1px solid rgba(255,255,255,.15);}
+
+/* CATS */
+.cat-list{display:flex;flex-direction:column;gap:.32rem;max-height:240px;overflow-y:auto;margin-bottom:.65rem;padding-right:.2rem;}
+.cat-row{display:flex;align-items:center;gap:.45rem;background:var(--card);border:1px solid var(--border);border-radius:7px;padding:.4rem .68rem;}
+.cat-sw{width:12px;height:12px;border-radius:3px;flex-shrink:0;}
+.cat-name{flex:1;font-size:.8rem;}
+.cat-edit-btn,.cat-del-btn{background:none;border:none;cursor:pointer;font-size:.72rem;padding:.12rem .3rem;border-radius:4px;transition:background .15s;}
+.cat-edit-btn:hover{background:rgba(56,189,248,.15);color:var(--primary);}
+.cat-del-btn:hover{background:rgba(248,113,113,.15);color:var(--rose);}
+.cat-add-row{display:flex;gap:.4rem;flex-wrap:wrap;align-items:flex-end;}
+.cat-add-row .ff{flex:1;min-width:100px;}
+
+/* ── SEMANA ── */
+.wknav{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.1rem;}
+.wknav h2{font-family:'DM Serif Display',serif;font-size:1.3rem;}
+.navbtn{width:32px;height:32px;border-radius:7px;border:1px solid var(--border);background:var(--card);
+  color:var(--text);cursor:pointer;font-size:.88rem;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.navbtn:hover{border-color:var(--primary);color:var(--primary);}
+.wkgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:.38rem;margin-bottom:1.6rem;}
+.dc{min-height:245px;}
+.dh{text-align:center;padding:.48rem .18rem;border-radius:7px 7px 0 0;background:var(--surface);border:1px solid var(--border);border-bottom:none;}
+.dn-s{font-size:.59rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;}
+.dn-n{font-size:1.18rem;font-weight:800;margin-top:.05rem;color:var(--subtle);}
+.dc.tod .dh{background:rgba(56,189,248,.08);border-color:var(--primary);}
+.dc.tod .dn-n{color:var(--primary);}
+.db{background:var(--card);border:1px solid var(--border);border-radius:0 0 7px 7px;
+  min-height:205px;padding:.32rem;display:flex;flex-direction:column;gap:.25rem;}
+.ac{border-radius:5px;padding:.38rem .48rem;font-size:.67rem;cursor:pointer;
+  border-left:3px solid;transition:transform .14s,opacity .14s;position:relative;}
+.ac:hover{transform:scale(1.02);}
+.ac.done{opacity:.35;text-decoration:line-through;}
+.ac .at{font-family:'DM Mono',monospace;font-size:.58rem;opacity:.7;}
+.ac .tt{font-weight:600;margin-top:.06rem;line-height:1.2;}
+.ac .tp{font-size:.57rem;opacity:.55;text-transform:uppercase;}
+.ac .caa{position:absolute;top:2px;right:2px;display:flex;gap:1px;opacity:0;transition:opacity .14s;}
+.ac:hover .caa{opacity:1;}
+.cab{background:none;border:none;cursor:pointer;font-size:.63rem;color:inherit;padding:1px 3px;border-radius:3px;}
+.cab:hover{background:rgba(255,255,255,.15);}
+
+/* ── LISTA ── */
+.lv{display:none;}.lv.on{display:block;}.wv.hid{display:none;}
+.lg{margin-bottom:1.2rem;}
+.lgh{display:flex;align-items:center;gap:.55rem;padding:.45rem 0;margin-bottom:.38rem;border-bottom:1px solid var(--border);}
+.dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.lgh h3{font-size:.74rem;color:var(--subtle);text-transform:uppercase;letter-spacing:.07em;}
+.li{display:flex;align-items:center;gap:.8rem;background:var(--card);border:1px solid var(--border);
+  border-radius:9px;padding:.78rem .9rem;margin-bottom:.32rem;transition:border-color .2s,transform .14s;}
+.li:hover{border-color:var(--primary);transform:translateX(2px);}
+.li.done{opacity:.35;}
+.chk{width:17px;height:17px;border-radius:4px;border:2px solid var(--border);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:.64rem;transition:all .2s;cursor:pointer;}
+.li.done .chk{background:var(--primary);border-color:var(--primary);color:#000;}
+.ii{flex:1;min-width:0;}
+.it{font-weight:600;font-size:.84rem;}
+.im{font-size:.68rem;color:var(--muted);font-family:'DM Mono',monospace;margin-top:.13rem;}
+.ibadge{font-size:.6rem;font-weight:700;padding:.18rem .48rem;border-radius:20px;text-transform:uppercase;letter-spacing:.05em;flex-shrink:0;}
+.iac{display:flex;gap:.25rem;opacity:0;transition:opacity .14s;flex-shrink:0;}
+.li:hover .iac{opacity:1;}
+.iab{background:none;border:1px solid var(--border);color:var(--muted);font-size:.68rem;
+  padding:.15rem .42rem;border-radius:4px;cursor:pointer;transition:all .14s;}
+.iab:hover{border-color:var(--accent);color:var(--accent);}
+
+/* PROGRESO */
+.prs{margin-bottom:1.6rem;}
+.prs h3{font-size:.74rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.55rem;}
+.prw{display:flex;align-items:center;gap:.6rem;margin-bottom:.38rem;}
+.prl{font-size:.7rem;color:var(--subtle);width:120px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.prt{flex:1;height:5px;background:var(--surface);border-radius:3px;overflow:hidden;}
+.prf{height:100%;border-radius:3px;transition:width .55s ease;}
+.prp{font-family:'DM Mono',monospace;font-size:.67rem;color:var(--muted);width:32px;text-align:right;}
+
+/* ── TOOLTIP FLOTANTE ── */
+.tooltip{position:fixed;z-index:9999;background:var(--card);border:1px solid var(--border);
+  border-radius:9px;padding:.55rem .85rem;font-size:.72rem;color:var(--text);
+  pointer-events:none;opacity:0;transition:opacity .18s;max-width:220px;line-height:1.55;
+  box-shadow:0 4px 20px rgba(0,0,0,.45);}
+.tooltip.on{opacity:1;}
+
+/* ── NOTIF ── */
+.nbox{position:fixed;top:1.3rem;right:1.3rem;z-index:9200;background:var(--card);
+  border:2px solid var(--accent);border-radius:14px;padding:1rem 1.2rem;
+  min-width:290px;max-width:370px;box-shadow:0 8px 36px rgba(0,0,0,.65);
+  animation:nIn .35s cubic-bezier(.175,.885,.32,1.275);pointer-events:all;}
+@keyframes nIn{from{opacity:0;transform:translateX(115%) scale(.8)}to{opacity:1;transform:translateX(0) scale(1)}}
+@keyframes nOut{from{opacity:1}to{opacity:0;transform:translateX(115%) scale(.8)}}
+.nbox.cl{animation:nOut .28s ease forwards;}
+.nhdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;}
+.ntb{font-size:.72rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.07em;}
+.nclose{background:none;border:none;color:var(--muted);cursor:pointer;font-size:.95rem;line-height:1;}
+.nclose:hover{color:var(--text);}
+.nico{font-size:1.4rem;margin-bottom:.28rem;}
+.nat{font-weight:700;font-size:.88rem;margin-bottom:.2rem;line-height:1.3;}
+.nme{font-size:.68rem;color:var(--muted);font-family:'DM Mono',monospace;margin-top:.1rem;}
+.nbar{height:3px;background:var(--border);border-radius:2px;margin-top:.72rem;overflow:hidden;}
+.nbf{height:100%;background:var(--accent);border-radius:2px;}
+.ncd{font-size:.6rem;color:var(--muted);text-align:right;margin-top:.18rem;font-family:'DM Mono',monospace;}
+.nft{display:flex;gap:.3rem;margin-top:.72rem;}
+.nb2{flex:1;font-family:'Syne',sans-serif;font-size:.68rem;font-weight:600;padding:.36rem .38rem;
+  border-radius:6px;border:1px solid var(--border);cursor:pointer;background:var(--surface);color:var(--subtle);transition:all .18s;}
+.nb2:hover{border-color:var(--primary);color:var(--primary);}
+.nb2.ok{background:var(--accent);color:#000;border-color:var(--accent);}
+
+/* ── MODAL ── */
+.moverlay{position:fixed;inset:0;z-index:8100;background:rgba(0,0,0,.8);
+  display:flex;align-items:center;justify-content:center;animation:fi .17s ease;}
+.moverlay.hid{display:none;}
+@keyframes fi{from{opacity:0}to{opacity:1}}
+.mbox{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.45rem;
+  width:92%;max-width:560px;max-height:88vh;overflow-y:auto;animation:sd .22s ease;}
+.mbox h3{font-size:.88rem;color:var(--accent);margin-bottom:.95rem;text-transform:uppercase;letter-spacing:.06em;}
+
+/* CSV MODAL */
+.csv-row{display:flex;gap:.6rem;align-items:flex-end;flex-wrap:wrap;margin-bottom:.8rem;}
+.csv-row .ff{flex:1;min-width:140px;}
+
+/* SAVE DOT */
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;margin-left:.35rem;opacity:0;transition:opacity .28s;}
+.sdot.on{opacity:1;}
+
+/* TOAST */
+.toast{position:fixed;bottom:1.6rem;left:50%;transform:translateX(-50%);
+  background:var(--card);border:1px solid var(--border);border-radius:8px;
+  padding:.5rem 1.05rem;font-size:.75rem;color:var(--text);z-index:9999;
+  animation:sd .26s ease;white-space:nowrap;box-shadow:0 4px 18px rgba(0,0,0,.45);}
+
+.empty{text-align:center;padding:1.1rem;color:var(--muted);font-size:.72rem;}
+.sep{height:1px;background:var(--border);margin:.7rem 0;}
+
+@media(max-width:750px){.wkgrid{grid-template-columns:repeat(3,1fr);}.stats{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:430px){.wkgrid{grid-template-columns:repeat(1,1fr);}}
+</style>
+</head>
+<body>
+
+<!-- ══ BARRA SUPERIOR FIJA ══ -->
+<div class="wb">
+  <div class="wb-left">
+    <div class="logo-slot" id="logoSlot">
+      <span class="logo-ph" id="logoPh">🏢</span>
+      <img id="logoImg" alt="Logo">
+      <input type="file" id="logoInput" accept="image/*" onchange="loadLogo(event)">
+    </div>
+    <div>
+      <div class="greeting" id="greeting">Bienvenido/a</div>
+      <div class="uname" id="uname">Tu <span>Nombre</span> aquí</div>
+    </div>
+  </div>
+  <div class="wb-right">
+    <div class="mode-sel">
+      <button class="mbtn p on" id="btnP" onclick="setMode('p')">👤 Personal</button>
+      <button class="mbtn l"    id="btnL" onclick="setMode('l')">💼 Laboral</button>
+      <button class="mbtn e"    id="btnE" onclick="setMode('e')">🎓 Estudiantil</button>
+    </div>
+    <button class="btn" style="border-color:var(--violet);color:var(--violet);font-size:.72rem;" onclick="toggleAcc('perfPanel')">⚙️ Perfil</button>
+    <button class="bcsv" onclick="openCsvModal()">📊 Exportar CSV</button>
+    <button class="wb-exit" onclick="exitApp()">⏻ Salir</button>
+  </div>
+</div>
+
+<!-- BANNER INSTALACIÓN PWA -->
+<div id="installBanner" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:9500;
+  background:linear-gradient(135deg,#1e293b,#0f172a);border-top:2px solid #38bdf8;
+  padding:1rem 1.5rem;box-shadow:0 -4px 30px rgba(0,0,0,.5);">
+  <div style="max-width:600px;margin:0 auto;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+    <div style="font-size:2rem;">📱</div>
+    <div style="flex:1;">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem;color:#e2e8f0;">Instalar Agenda en tu dispositivo</div>
+      <div style="font-family:'DM Mono',monospace;font-size:.72rem;color:#64748b;margin-top:.2rem;">Instálala para recibir alarmas aunque cierres el navegador</div>
+    </div>
+    <button id="installBtn" style="background:#38bdf8;color:#000;border:none;font-family:'Syne',sans-serif;font-weight:700;font-size:.82rem;padding:.6rem 1.3rem;border-radius:9px;cursor:pointer;white-space:nowrap;">📲 Instalar App</button>
+    <button onclick="document.getElementById('installBanner').style.display='none'" style="background:none;border:1px solid #334155;color:#64748b;font-family:'Syne',sans-serif;font-size:.8rem;padding:.55rem .9rem;border-radius:8px;cursor:pointer;">Ahora no</button>
+  </div>
+</div>
+
+<!-- PANEL ESTADO PWA (dentro del wrap, antes del header) -->
+<div id="pwaBanner" style="display:none;background:#134e4a;border:1px solid #2dd4bf;border-radius:12px;padding:.75rem 1.1rem;margin-bottom:1.2rem;display:flex;align-items:center;justify-content:space-between;gap:.75rem;flex-wrap:wrap;">
+  <div style="display:flex;align-items:center;gap:.7rem;">
+    <span style="font-size:1.2rem;">🔔</span>
+    <div>
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.8rem;color:#2dd4bf;" id="pwaStatusText">Notificaciones en segundo plano activas</div>
+      <div style="font-family:'DM Mono',monospace;font-size:.68rem;color:#5eead4;margin-top:.15rem;" id="pwaStatusSub">Las alarmas funcionarán aunque cierres la app</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:.45rem;flex-wrap:wrap;">
+    <button onclick="pwaTestNotif()" style="background:#0d9488;color:#fff;border:none;font-family:'Syne',sans-serif;font-weight:600;font-size:.73rem;padding:.38rem .85rem;border-radius:7px;cursor:pointer;">▶ Probar</button>
+    <button onclick="document.getElementById('pwaBanner').style.display='none'" style="background:none;border:1px solid #2dd4bf;color:#2dd4bf;font-family:'Syne',sans-serif;font-size:.73rem;padding:.38rem .75rem;border-radius:7px;cursor:pointer;">✕</button>
+  </div>
+</div>
+
+<div id="notifDeniedBanner" style="display:none;background:#431407;border:1px solid #f87171;border-radius:12px;padding:.75rem 1.1rem;margin-bottom:1.2rem;">
+  <div style="display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;">
+    <span style="font-size:1.1rem;">⚠️</span>
+    <div style="flex:1;">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:.8rem;color:#f87171;">Notificaciones bloqueadas</div>
+      <div style="font-family:'DM Mono',monospace;font-size:.68rem;color:#fca5a5;margin-top:.15rem;">Ve a Configuración del navegador → Notificaciones → Permitir para este sitio</div>
+    </div>
+    <button onclick="requestNotifPermission()" style="background:#dc2626;color:#fff;border:none;font-family:'Syne',sans-serif;font-weight:700;font-size:.73rem;padding:.38rem .85rem;border-radius:7px;cursor:pointer;">Activar</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+<!-- ══ HEADER ══ -->
+<header>
+  <div class="hl">
+    <h1>Agenda <span class="mtag p" id="modeTag">Personal</span></h1>
+    <p id="subTitle">// ACTIVIDADES PERSONALES — v3.0</p>
+  </div>
+  <div class="clk" onclick="toggleClock12()" title="Clic para cambiar formato 12h/24h">
+    <div class="time" id="clock">--:--:--</div>
+    <div class="dt" id="dateLabel"></div>
+    <div class="fmt-hint" id="fmtHint">● Toca para cambiar formato</div>
+  </div>
+</header>
+
+<!-- ══ STATS ══ -->
+<div class="stats">
+  <div class="stat" style="--sc:var(--primary)"><div class="sv" id="sTot">0</div><div class="sl">Total</div></div>
+  <div class="stat" style="--sc:var(--accent)"><div class="sv" id="sPend">0</div><div class="sl">Pendientes</div></div>
+  <div class="stat" style="--sc:var(--green)"><div class="sv" id="sComp">0</div><div class="sl">Completadas</div></div>
+  <div class="stat" style="--sc:var(--rose)"><div class="sv" id="sHoy">0</div><div class="sl">Hoy</div></div>
+  <div class="stat" style="--sc:var(--violet)"><div class="sv" id="sPct">0%</div><div class="sl">Progreso</div></div>
+</div>
+
+<!-- ══ CONTROLES ══ -->
+<div class="ctrls">
+  <button class="btn on" id="btnSem" onclick="setView('w')">📅 Semana</button>
+  <button class="btn" id="btnList" onclick="setView('l')">📋 Lista</button>
+  <div class="fgrp" id="filterGroup"></div>
+  <button class="btn" style="border-color:var(--primary);color:var(--primary);margin-left:auto;" onclick="toggleAcc('addPanel')">＋ Agregar Tarea</button>
+</div>
+
+<!-- ══ PANEL AGREGAR ══ -->
+<div class="panel" id="addPanel">
+  <div class="ptitle" style="color:var(--primary)" id="addTitle">＋ Nueva Actividad</div>
+  <div class="fg">
+    <div class="ff" style="grid-column:1/-1"><label>Título *</label><input type="text" id="fTit" placeholder="Describe la actividad..."></div>
+    <div class="ff"><label>Categoría *</label><select id="fTipo"></select></div>
+    <div class="ff"><label>Fecha *</label><input type="date" id="fFecha"></div>
+    <div class="ff"><label>Hora Inicio</label><input type="time" id="fHi"></div>
+    <div class="ff"><label>Hora Fin</label><input type="time" id="fHf"></div>
+    <div class="ff"><label>Prioridad</label>
+      <select id="fPrio"><option value="alta">🔴 Alta</option><option value="media" selected>🟡 Media</option><option value="baja">🟢 Baja</option></select></div>
+    <div class="ff"><label>Aviso anticipado</label>
+      <select id="fAviso"><option value="0">Sin aviso</option><option value="5">5 min</option><option value="10" selected>10 min</option><option value="15">15 min</option><option value="20">20 min</option><option value="30">30 min</option></select></div>
+    <div class="ff"><label>Duración notificación</label>
+      <select id="fNdur"><option value="5">5 seg</option><option value="10" selected>10 seg</option><option value="15">15 seg</option><option value="20">20 seg</option><option value="30">30 seg</option><option value="60">60 seg</option></select></div>
+    <div class="ff" style="grid-column:1/-1"><label>Notas</label><textarea id="fNotas" rows="2" placeholder="Detalles, ubicación, instrucciones..."></textarea></div>
+  </div>
+  <div class="fac">
+    <button class="bp" onclick="saveActivity()">💾 Guardar Actividad</button>
+    <button class="bc" onclick="toggleAcc('addPanel')">Cancelar</button>
+  </div>
+</div>
+
+<!-- ══ PERFIL (acordeón principal) ══ -->
+<div class="acc-section" id="perfPanel" style="display:none;">
+  <div style="padding:1.15rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+    <span style="font-size:.84rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--violet);">⚙️ Perfil y Configuración <span class="sdot" id="perfDot"></span></span>
+    <button class="bc" onclick="toggleAcc('perfPanel')" style="font-size:.73rem;padding:.35rem .7rem;">✕ Cerrar</button>
+  </div>
+  <div style="padding:1.15rem;display:flex;flex-direction:column;gap:.7rem;">
+
+    <!-- DATOS USUARIO -->
+    <div class="acc-section">
+      <div class="acc-header" onclick="toggleSubAcc(this)">
+        <span class="acc-title" style="color:var(--primary)">👤 Datos del Usuario</span>
+        <span class="acc-arrow">▼</span>
+      </div>
+      <div class="acc-body">
+        <div class="psec" style="margin-bottom:.5rem;">
+          <div class="row">
+            <div class="ff"><label>Nombre</label><input type="text" id="pNombre" placeholder="Tu nombre"></div>
+            <div class="ff"><label>Apellido</label><input type="text" id="pApellido" placeholder="Tu apellido"></div>
+            <div class="ff"><label>Saludo</label><input type="text" id="pSaludo" placeholder="¡Hola! Bienvenido/a"></div>
+          </div>
+          <div style="margin-top:.75rem;">
+            <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.45rem;">🖼️ Logotipo</div>
+            <div style="display:flex;align-items:center;gap:.65rem;flex-wrap:wrap;">
+              <div class="logo-slot" style="width:52px;height:52px;" onclick="document.getElementById('logoInput').click()">
+                <span class="logo-ph" id="logoPh2">🏢</span>
+                <img id="logoImg2" alt="Logo" style="display:none;width:100%;height:100%;object-fit:contain;">
+              </div>
+              <button class="bp" onclick="document.getElementById('logoInput').click()" style="font-size:.74rem;padding:.42rem .95rem;">📁 Cargar</button>
+              <button class="bc" onclick="clearLogo()" style="font-size:.74rem;padding:.42rem .85rem;">✕ Quitar</button>
+            </div>
+          </div>
+        </div>
+        <div class="fac">
+          <button class="bp" onclick="savePerfil()">💾 Guardar Perfil</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TEMA Y FONDO -->
+    <div class="acc-section">
+      <div class="acc-header" onclick="toggleSubAcc(this)">
+        <span class="acc-title" style="color:var(--accent)">🎨 Tema de Color y Fondo</span>
+        <span class="acc-arrow">▼</span>
+      </div>
+      <div class="acc-body">
+        <div class="psec" style="margin-bottom:.5rem;">
+          <div style="display:flex;gap:1.4rem;flex-wrap:wrap;">
+            <div>
+              <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.4rem;">Tema de color</div>
+              <div style="display:flex;flex-wrap:wrap;gap:.38rem;" id="paletteRow"></div>
+            </div>
+            <div>
+              <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.4rem;">Color de acento personalizado</div>
+              <div style="display:flex;gap:.45rem;align-items:center;">
+                <input type="color" id="customColor" value="#38bdf8" style="padding:.2rem;height:30px;border-radius:6px;background:var(--surface);border:1px solid var(--border);cursor:pointer;width:52px;">
+                <button class="bp" onclick="applyCustomColor()" style="font-size:.73rem;padding:.36rem .85rem;">Aplicar</button>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.4rem;">Color de Fondo</div>
+              <div class="bg-opts" id="bgOpts">
+                <div class="bg-opt on" id="bgOpt0" onclick="setBg(0,this)"><div class="bg-swatch" style="background:#000"></div>Negro</div>
+                <div class="bg-opt"    id="bgOpt1" onclick="setBg(1,this)"><div class="bg-swatch" style="background:#3a3a3a"></div>Gris Oscuro</div>
+                <div class="bg-opt"    id="bgOpt2" onclick="setBg(2,this)"><div class="bg-swatch" style="background:#c8c8c8;border-color:rgba(0,0,0,.3)"></div>Gris Claro</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="fac">
+          <button class="bp" onclick="saveTheme()">💾 Guardar Tema</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ALARMA -->
+    <div class="acc-section">
+      <div class="acc-header" onclick="toggleSubAcc(this)">
+        <span class="acc-title" style="color:var(--accent)">🔔 Configuración de Alarma Global</span>
+        <span class="acc-arrow">▼</span>
+      </div>
+      <div class="acc-body">
+        <div class="psec" style="margin-bottom:.5rem;">
+          <div class="fg">
+            <div class="ff"><label>Aviso anticipado</label>
+              <select id="gAviso" onchange="updateAlarmPrev()"><option value="5">5 min</option><option value="10" selected>10 min</option><option value="15">15 min</option><option value="20">20 min</option><option value="30">30 min</option></select></div>
+            <div class="ff"><label>Duración notificación</label>
+              <select id="gNotifDur" onchange="updateAlarmPrev()"><option value="5">5 seg</option><option value="10" selected>10 seg</option><option value="15">15 seg</option><option value="20">20 seg</option><option value="30">30 seg</option><option value="60">60 seg</option></select></div>
+            <div class="ff"><label>Tipo de sonido</label>
+              <select id="gSonido" onchange="updateAlarmPrev()"><option value="none">🔇 Sin sonido</option><option value="beep" selected>🔉 Beep</option><option value="bell">🔔 Campana</option><option value="urgent">🚨 Urgente</option><option value="chime">🎵 Carillón</option></select></div>
+            <div class="ff"><label>Duración sonido</label>
+              <select id="gSonidoDur" onchange="updateAlarmPrev()"><option value="5" selected>5 seg</option><option value="10">10 seg</option><option value="15">15 seg</option><option value="20">20 seg</option><option value="30">30 seg</option></select></div>
+          </div>
+          <div id="alarmPrev" style="margin-top:.55rem;padding:.55rem .8rem;background:var(--bg);border-radius:6px;border:1px solid var(--border);font-size:.72rem;color:var(--muted);font-family:'DM Mono',monospace;"></div>
+        </div>
+        <div class="fac">
+          <button class="bw" onclick="testAlarm()">▶ Probar Sonido</button>
+          <button class="bp" onclick="saveAlarm()">💾 Guardar Alarma</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CATS PERSONAL -->
+    <div class="acc-section">
+      <div class="acc-header" onclick="toggleSubAcc(this)">
+        <span class="acc-title" style="color:var(--mode-p)">🏷️ Categorías — 👤 Personal</span>
+        <span class="acc-arrow">▼</span>
+      </div>
+      <div class="acc-body">
+        <div class="cat-list" id="catListP"></div>
+        <div class="cat-add-row">
+          <div class="ff"><label>Nombre</label><input type="text" id="catNomP" placeholder="Nueva" maxlength="24" style="width:130px;"></div>
+          <div class="ff"><label>Ícono</label><input type="text" id="catIcoP" placeholder="⭐" maxlength="4" style="width:55px;"></div>
+          <div class="ff"><label>Color</label><input type="color" id="catColP" value="#34d399" style="padding:.18rem;height:30px;border-radius:6px;background:var(--surface);border:1px solid var(--border);cursor:pointer;width:55px;"></div>
+          <button class="bp" onclick="addCat('p')" style="height:30px;padding:0 .85rem;font-size:.74rem;align-self:flex-end;">＋ Agregar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CATS LABORAL -->
+    <div class="acc-section">
+      <div class="acc-header" onclick="toggleSubAcc(this)">
+        <span class="acc-title" style="color:var(--mode-l)">🏷️ Categorías — 💼 Laboral</span>
+        <span class="acc-arrow">▼</span>
+      </div>
+      <div class="acc-body">
+        <div class="cat-list" id="catListL"></div>
+        <div class="cat-add-row">
+          <div class="ff"><label>Nombre</label><input type="text" id="catNomL" placeholder="Nueva" maxlength="24" style="width:130px;"></div>
+          <div class="ff"><label>Ícono</label><input type="text" id="catIcoL" placeholder="🔧" maxlength="4" style="width:55px;"></div>
+          <div class="ff"><label>Color</label><input type="color" id="catColL" value="#38bdf8" style="padding:.18rem;height:30px;border-radius:6px;background:var(--surface);border:1px solid var(--border);cursor:pointer;width:55px;"></div>
+          <button class="bp" onclick="addCat('l')" style="height:30px;padding:0 .85rem;font-size:.74rem;align-self:flex-end;">＋ Agregar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CATS ESTUDIANTIL -->
+    <div class="acc-section">
+      <div class="acc-header" onclick="toggleSubAcc(this)">
+        <span class="acc-title" style="color:var(--mode-e)">🏷️ Categorías — 🎓 Estudiantil</span>
+        <span class="acc-arrow">▼</span>
+      </div>
+      <div class="acc-body">
+        <div class="cat-list" id="catListE"></div>
+        <div class="cat-add-row">
+          <div class="ff"><label>Nombre</label><input type="text" id="catNomE" placeholder="Nueva" maxlength="24" style="width:130px;"></div>
+          <div class="ff"><label>Ícono</label><input type="text" id="catIcoE" placeholder="📚" maxlength="4" style="width:55px;"></div>
+          <div class="ff"><label>Color</label><input type="color" id="catColE" value="#a78bfa" style="padding:.18rem;height:30px;border-radius:6px;background:var(--surface);border:1px solid var(--border);cursor:pointer;width:55px;"></div>
+          <button class="bp" onclick="addCat('e')" style="height:30px;padding:0 .85rem;font-size:.74rem;align-self:flex-end;">＋ Agregar</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /perfil interior -->
+</div><!-- /perfPanel -->
+
+<!-- ══ VISTAS ══ -->
+<div class="wv" id="weekView">
+  <div class="wknav">
+    <button class="navbtn" onclick="changeWeek(-1)">‹</button>
+    <h2 id="weekLabel">Semana</h2>
+    <button class="navbtn" onclick="changeWeek(1)">›</button>
+  </div>
+  <div class="wkgrid" id="weekGrid"></div>
+</div>
+<div class="lv" id="listView">
+  <div class="prs"><h3>Progreso por Categoría</h3><div id="progBars"></div></div>
+  <div id="listContent"></div>
+</div>
+
+</div><!-- /wrap -->
+
+<!-- ══ MODAL EDITAR TAREA ══ -->
+<div class="moverlay hid" id="editModal">
+  <div class="mbox">
+    <h3>✏️ Editar Actividad</h3>
+    <input type="hidden" id="editId">
+    <div class="fg">
+      <div class="ff" style="grid-column:1/-1"><label>Título *</label><input type="text" id="eTit"></div>
+      <div class="ff"><label>Categoría</label><select id="eTipo"></select></div>
+      <div class="ff"><label>Fecha *</label><input type="date" id="eFecha"></div>
+      <div class="ff"><label>Hora Inicio</label><input type="time" id="eHi"></div>
+      <div class="ff"><label>Hora Fin</label><input type="time" id="eHf"></div>
+      <div class="ff"><label>Prioridad</label>
+        <select id="ePrio"><option value="alta">🔴 Alta</option><option value="media">🟡 Media</option><option value="baja">🟢 Baja</option></select></div>
+      <div class="ff"><label>Aviso</label>
+        <select id="eAviso"><option value="0">Sin aviso</option><option value="5">5 min</option><option value="10">10 min</option><option value="15">15 min</option><option value="20">20 min</option><option value="30">30 min</option></select></div>
+      <div class="ff"><label>Duración notif.</label>
+        <select id="eNdur"><option value="5">5 seg</option><option value="10">10 seg</option><option value="15">15 seg</option><option value="20">20 seg</option><option value="30">30 seg</option><option value="60">60 seg</option></select></div>
+      <div class="ff" style="grid-column:1/-1"><label>Notas</label><textarea id="eNotas" rows="2"></textarea></div>
+    </div>
+    <div class="fac">
+      <button class="bp" onclick="saveEdit()">💾 Guardar Cambios</button>
+      <button class="bc" onclick="closeEdit()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL EDITAR CATEGORÍA ══ -->
+<div class="moverlay hid" id="catEditModal">
+  <div class="mbox" style="max-width:400px;">
+    <h3>✏️ Editar Categoría</h3>
+    <input type="hidden" id="catEditId"><input type="hidden" id="catEditMode">
+    <div class="fg">
+      <div class="ff"><label>Nombre *</label><input type="text" id="ceName" maxlength="24"></div>
+      <div class="ff"><label>Ícono</label><input type="text" id="ceIco" maxlength="4"></div>
+      <div class="ff"><label>Color</label><input type="color" id="ceCol" style="padding:.2rem;height:32px;border-radius:6px;background:var(--surface);border:1px solid var(--border);cursor:pointer;width:100%;"></div>
+    </div>
+    <div class="fac">
+      <button class="bp" onclick="saveCatEdit()">💾 Guardar</button>
+      <button class="bc" onclick="closeCatEdit()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL EXPORTAR CSV ══ -->
+<div class="moverlay hid" id="csvModal">
+  <div class="mbox" style="max-width:460px;">
+    <h3>📊 Exportar CSV</h3>
+    <div style="font-size:.78rem;color:var(--muted);margin-bottom:1rem;line-height:1.6;">
+      Selecciona el rango de fechas para exportar. Deja en blanco para exportar todas las actividades.
+    </div>
+    <div class="csv-row">
+      <div class="ff"><label>Fecha Inicio (desde)</label><input type="date" id="csvDesde"></div>
+      <div class="ff"><label>Fecha Fin (hasta)</label><input type="date" id="csvHasta"></div>
+    </div>
+    <div class="ff" style="margin-bottom:.9rem;">
+      <label>Filtrar por modo</label>
+      <select id="csvModo">
+        <option value="all">Todos (Personal + Laboral + Estudiantil)</option>
+        <option value="p">Solo Personal</option>
+        <option value="l">Solo Laboral</option>
+        <option value="e">Solo Estudiantil</option>
+      </select>
+    </div>
+    <div style="font-size:.72rem;color:var(--muted);margin-bottom:.8rem;font-family:'DM Mono',monospace;" id="csvPreview">
+      Vista previa: calculando...
+    </div>
+    <div class="fac">
+      <button class="bp" onclick="doExportCSV()" style="background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;">📥 Descargar CSV</button>
+      <button class="bc" onclick="closeCsvModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div id="notifContainer"></div>
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// CONSTANTES
+// ══════════════════════════════════════════════════════
+const DIAS   =['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const DIASF  =['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const MESES  =['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const PRIO   ={alta:'🔴',media:'🟡',baja:'🟢'};
+const LS =k=>localStorage.getItem('agv3_'+k);
+const SS =(k,v)=>localStorage.setItem('agv3_'+k,typeof v==='string'?v:JSON.stringify(v));
+
+// Fondos: 3 opciones fijas
+const BG_OPTS=[
+  {bg:'#000000',su:'#0d0d0d',ca:'#141414',bo:'#1f1f1f',label:'Negro'},
+  {bg:'#2a2a2a',su:'#323232',ca:'#3a3a3a',bo:'#444',   label:'Gris Oscuro'},
+  {bg:'#b8b8b8',su:'#c4c4c4',ca:'#cecece',bo:'#a0a0a0',label:'Gris Claro',light:true},
+];
+
+const PALETAS=[
+  {n:'Océano',   pr:'#38bdf8',g1:'rgba(56,189,248,.07)',g2:'rgba(167,139,250,.05)'},
+  {n:'Bosque',   pr:'#34d399',g1:'rgba(52,211,153,.07)',g2:'rgba(16,185,129,.04)'},
+  {n:'Anochecer',pr:'#a78bfa',g1:'rgba(167,139,250,.07)',g2:'rgba(244,114,182,.04)'},
+  {n:'Rubí',     pr:'#f87171',g1:'rgba(248,113,113,.07)',g2:'rgba(251,191,36,.04)'},
+  {n:'Solar',    pr:'#fbbf24',g1:'rgba(251,191,36,.07)',g2:'rgba(248,113,113,.04)'},
+  {n:'Coral',    pr:'#f472b6',g1:'rgba(244,114,182,.07)',g2:'rgba(56,189,248,.04)'},
+  {n:'Jade',     pr:'#2dd4bf',g1:'rgba(45,212,191,.07)',g2:'rgba(167,139,250,.04)'},
+  {n:'Titanio',  pr:'#94a3b8',g1:'rgba(148,163,184,.06)',g2:'rgba(56,189,248,.04)'},
+];
+
+const DEF_CAT_P=[
+  {id:'familia',label:'Visitas Familiares',icon:'👨‍👩‍👧',color:'#f472b6',builtin:true},
+  {id:'paseo',  label:'Ir de Paseo',       icon:'🌳',     color:'#34d399',builtin:true},
+  {id:'estudiar',label:'Estudiar',          icon:'📖',     color:'#60a5fa',builtin:true},
+  {id:'hobby',  label:'Hobbys',            icon:'🎨',     color:'#a78bfa',builtin:true},
+  {id:'misa',   label:'Ir a Misa',         icon:'⛪',     color:'#fbbf24',builtin:true},
+  {id:'deporte',label:'Hacer Deportes',    icon:'⚽',     color:'#38bdf8',builtin:true},
+  {id:'compras',label:'Ir de Compras',     icon:'🛒',     color:'#f59e0b',builtin:true},
+  {id:'escuela',label:'Llevar Niños Escuela',icon:'🎒',   color:'#f87171',builtin:true},
+  {id:'otro_p', label:'Otro Personal',     icon:'⭐',     color:'#94a3b8',builtin:true},
+];
+const DEF_CAT_L=[
+  {id:'rev_maq', label:'Revisión de Máquinas',  icon:'🔍',color:'#38bdf8',builtin:true},
+  {id:'config',  label:'Configuraciones',        icon:'⚙️',color:'#a78bfa',builtin:true},
+  {id:'cambio_j',label:'Cambio de Juegos',       icon:'🎰',color:'#f59e0b',builtin:true},
+  {id:'movim',   label:'Movimiento de Máquinas', icon:'🚚',color:'#34d399',builtin:true},
+  {id:'prog_hor',label:'Prog. Horarios',         icon:'📆',color:'#60a5fa',builtin:true},
+  {id:'reparac', label:'Reparaciones',           icon:'🔧',color:'#f87171',builtin:true},
+  {id:'mant',    label:'Prog. Mantenimiento',    icon:'🛠️',color:'#fbbf24',builtin:true},
+  {id:'visita',  label:'Visitas a Centros',      icon:'🏢',color:'#2dd4bf',builtin:true},
+  {id:'borrado', label:'Borrado de Máquinas',    icon:'🗑️',color:'#94a3b8',builtin:true},
+  {id:'otro_l',  label:'Otro Laboral',           icon:'💼',color:'#64748b',builtin:true},
+];
+const DEF_CAT_E=[
+  {id:'clase',    label:'Clase',    icon:'📘',color:'#60a5fa',builtin:true},
+  {id:'tarea_e',  label:'Tarea',    icon:'📝',color:'#f59e0b',builtin:true},
+  {id:'examen',   label:'Examen',   icon:'📊',color:'#f87171',builtin:true},
+  {id:'proyecto', label:'Proyecto', icon:'🔬',color:'#a78bfa',builtin:true},
+  {id:'estudio',  label:'Estudio',  icon:'📖',color:'#34d399',builtin:true},
+  {id:'pers_e',   label:'Personal', icon:'⭐',color:'#94a3b8',builtin:true},
+];
+
+// ══════════════════════════════════════════════════════
+// ESTADO
+// ══════════════════════════════════════════════════════
+let mode='p',view='w',filter='all',wkOff=0;
+let activities=[],nextId=1;
+let catP=[],catL=[],catE=[];
+let alarmCfg={aviso:10,notifDur:10,sonido:'beep',sonidoDur:5};
+let perfil={nombre:'',apellido:'',saludo:''};
+let activeNotifs={},audioCtx=null;
+let currentPaleta=0,bgIdx=0;
+let logoData='';
+let clock12=false;
+let tipTimer=null;
+const TODAY=new Date();
+
+// ══════════════════════════════════════════════════════
+// PERSISTENCIA
+// ══════════════════════════════════════════════════════
+function loadAll(){
+  try{
+    const a=LS('acts');     if(a){activities=JSON.parse(a);}
+    const ni=LS('nid');     if(ni){nextId=parseInt(ni);}
+    const cp=LS('catP');    catP=cp?JSON.parse(cp):JSON.parse(JSON.stringify(DEF_CAT_P));
+    const cl=LS('catL');    catL=cl?JSON.parse(cl):JSON.parse(JSON.stringify(DEF_CAT_L));
+    const ce=LS('catE');    catE=ce?JSON.parse(ce):JSON.parse(JSON.stringify(DEF_CAT_E));
+    const ac=LS('alarm');   if(ac){alarmCfg=JSON.parse(ac);}
+    const pf=LS('perf');    if(pf){perfil=JSON.parse(pf);}
+    const md=LS('mode');    if(md){mode=md;}
+    const pal=LS('pal');    if(pal){currentPaleta=parseInt(pal);}
+    const bg=LS('bgIdx');   if(bg!==null){bgIdx=parseInt(bg);}
+    const pr=LS('primary'); if(pr){document.documentElement.style.setProperty('--primary',pr);}
+    const lg=LS('logo');    if(lg){logoData=lg;applyLogo(lg);}
+    const c12=LS('c12');    if(c12){clock12=c12==='1';}
+  }catch(e){console.error('Error carga:',e);}
+  if(!catP.length)catP=JSON.parse(JSON.stringify(DEF_CAT_P));
+  if(!catL.length)catL=JSON.parse(JSON.stringify(DEF_CAT_L));
+  if(!catE.length)catE=JSON.parse(JSON.stringify(DEF_CAT_E));
+}
+function saveActs(){SS('acts',activities);SS('nid',String(nextId));}
+function saveCats(){SS('catP',catP);SS('catL',catL);SS('catE',catE);}
+
+// ══════════════════════════════════════════════════════
+// RELOJ 12/24h
+// ══════════════════════════════════════════════════════
+function updateClock(){
+  const n=new Date();
+  let timeStr,ampm='';
+  if(clock12){
+    const h12=n.getHours()%12||12;
+    ampm=n.getHours()<12?' AM':' PM';
+    timeStr=String(h12).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+':'+String(n.getSeconds()).padStart(2,'0');
+  } else {
+    timeStr=n.toLocaleTimeString('es',{hour12:false});
+  }
+  document.getElementById('clock').innerHTML=timeStr+(ampm?`<span class="ampm">${ampm}</span>`:'');
+  document.getElementById('dateLabel').textContent=DIASF[n.getDay()]+', '+n.getDate()+' de '+MESES[n.getMonth()]+' '+n.getFullYear();
+  document.getElementById('fmtHint').textContent=clock12?'● Formato 12h — Toca para 24h':'● Formato 24h — Toca para 12h';
+}
+function toggleClock12(){clock12=!clock12;SS('c12',clock12?'1':'0');updateClock();toast(clock12?'🕐 Formato 12h (AM/PM)':'🕐 Formato 24h');}
+updateClock();setInterval(updateClock,1000);
+
+// ══════════════════════════════════════════════════════
+// BIENVENIDA
+// ══════════════════════════════════════════════════════
+function updateWelcome(){
+  const full=[perfil.nombre,perfil.apellido].filter(Boolean).join(' ');
+  const h=new Date().getHours();
+  const auto=h<12?'¡Buenos días!':h<18?'¡Buenas tardes!':'¡Buenas noches!';
+  document.getElementById('greeting').textContent=perfil.saludo||auto;
+  document.getElementById('uname').innerHTML=full
+    ?full.split(' ').map((w,i)=>i===0?`<span>${w}</span>`:w).join(' ')
+    :'Tu <span>Nombre</span> aquí';
+  document.getElementById('pNombre').value=perfil.nombre||'';
+  document.getElementById('pApellido').value=perfil.apellido||'';
+  document.getElementById('pSaludo').value=perfil.saludo||'';
+}
+
+// ══════════════════════════════════════════════════════
+// LOGO
+// ══════════════════════════════════════════════════════
+function loadLogo(e){
+  const file=e.target.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=ev=>{logoData=ev.target.result;applyLogo(logoData);SS('logo',logoData);toast('🖼️ Logo guardado');};
+  r.readAsDataURL(file);
+}
+function applyLogo(data){
+  ['logoImg','logoImg2'].forEach(id=>{const i=document.getElementById(id);if(i){i.src=data;i.style.display='block';}});
+  ['logoPh','logoPh2'].forEach(id=>{const p=document.getElementById(id);if(p)p.style.display='none';});
+}
+function clearLogo(){
+  logoData='';localStorage.removeItem('agv3_logo');
+  ['logoImg','logoImg2'].forEach(id=>{const i=document.getElementById(id);if(i){i.src='';i.style.display='none';}});
+  ['logoPh','logoPh2'].forEach(id=>{const p=document.getElementById(id);if(p)p.style.display='';});
+  toast('🖼️ Logo eliminado');
+}
+
+// ══════════════════════════════════════════════════════
+// GUARDAR (manual por sección)
+// ══════════════════════════════════════════════════════
+function savePerfil(){
+  perfil.nombre  =document.getElementById('pNombre').value.trim();
+  perfil.apellido=document.getElementById('pApellido').value.trim();
+  perfil.saludo  =document.getElementById('pSaludo').value.trim();
+  SS('perf',perfil);updateWelcome();flashDot();toast('✅ Perfil guardado');
+}
+function saveTheme(){
+  SS('pal',String(currentPaleta));SS('bgIdx',String(bgIdx));
+  const pr=getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
+  SS('primary',pr);flashDot();toast('🎨 Tema guardado');
+}
+function saveAlarm(){
+  alarmCfg.aviso    =parseInt(document.getElementById('gAviso').value);
+  alarmCfg.notifDur =parseInt(document.getElementById('gNotifDur').value);
+  alarmCfg.sonido   =document.getElementById('gSonido').value;
+  alarmCfg.sonidoDur=parseInt(document.getElementById('gSonidoDur').value);
+  SS('alarm',alarmCfg);flashDot();toast('🔔 Alarma guardada');
+}
+function flashDot(){const d=document.getElementById('perfDot');d.classList.add('on');setTimeout(()=>d.classList.remove('on'),2500);}
+
+// ══════════════════════════════════════════════════════
+// PALETA Y FONDO
+// ══════════════════════════════════════════════════════
+function renderPalette(){
+  const row=document.getElementById('paletteRow');
+  row.innerHTML=PALETAS.map((p,i)=>`
+    <div class="swatch${i===currentPaleta?' on':''}" style="background:${p.pr}" title="${p.n}" onclick="applyPaleta(${i},this)"></div>`).join('');
+}
+function applyPaleta(idx,el){
+  currentPaleta=idx;const p=PALETAS[idx];
+  document.documentElement.style.setProperty('--primary',p.pr);
+  document.documentElement.style.setProperty('--g1',p.g1);
+  document.documentElement.style.setProperty('--g2',p.g2);
+  document.getElementById('customColor').value=p.pr;
+  document.querySelectorAll('.swatch').forEach(s=>s.classList.remove('on'));
+  if(el)el.classList.add('on');
+  toast('🎨 Tema "'+p.n+'" — Guarda para conservarlo');
+}
+function applyCustomColor(){
+  const c=document.getElementById('customColor').value;
+  document.documentElement.style.setProperty('--primary',c);
+  toast('🎨 Color de acento aplicado');
+}
+
+// FONDO — solo 3 opciones, sin modificar tema de color
+function setBg(idx,el){
+  bgIdx=idx;const b=BG_OPTS[idx];
+  const r=document.documentElement.style;
+  r.setProperty('--bg',b.bg);r.setProperty('--surface',b.su);
+  r.setProperty('--card',b.ca);r.setProperty('--border',b.bo);
+  if(b.light){
+    r.setProperty('--text','#111827');r.setProperty('--muted','#6b7280');r.setProperty('--subtle','#374151');
+  } else {
+    r.setProperty('--text','#e2e8f0');r.setProperty('--muted','#64748b');r.setProperty('--subtle','#94a3b8');
+  }
+  document.querySelectorAll('.bg-opt').forEach(o=>o.classList.remove('on'));
+  if(el)el.classList.add('on');
+  toast('🎨 Fondo: '+b.label+' — Guarda para conservarlo');
+}
+function applyBgFromSave(){
+  const b=BG_OPTS[bgIdx];if(!b)return;
+  const r=document.documentElement.style;
+  r.setProperty('--bg',b.bg);r.setProperty('--surface',b.su);r.setProperty('--card',b.ca);r.setProperty('--border',b.bo);
+  if(b.light){r.setProperty('--text','#111827');r.setProperty('--muted','#6b7280');r.setProperty('--subtle','#374151');}
+  else{r.setProperty('--text','#e2e8f0');r.setProperty('--muted','#64748b');r.setProperty('--subtle','#94a3b8');}
+  ['bgOpt0','bgOpt1','bgOpt2'].forEach((id,i)=>{const el=document.getElementById(id);if(el)el.classList.toggle('on',i===bgIdx);});
+}
+
+// ══════════════════════════════════════════════════════
+// ACORDEONES
+// ══════════════════════════════════════════════════════
+function toggleAcc(id){
+  const el=document.getElementById(id);if(!el)return;
+  const isPanel=el.classList.contains('panel');
+  if(isPanel){
+    el.classList.toggle('on');return;
+  }
+  // Es el perfil principal (acc-section wrapper)
+  const isVis=el.style.display!=='none';
+  el.style.display=isVis?'none':'block';
+  if(!isVis){renderCatLists();renderPalette();applyBgFromSave();
+    document.getElementById('gAviso').value=String(alarmCfg.aviso);
+    document.getElementById('gNotifDur').value=String(alarmCfg.notifDur);
+    document.getElementById('gSonido').value=alarmCfg.sonido;
+    document.getElementById('gSonidoDur').value=String(alarmCfg.sonidoDur);
+    updateAlarmPrev();updateWelcome();}
+}
+function toggleSubAcc(header){
+  const body=header.nextElementSibling;
+  const arrow=header.querySelector('.acc-arrow');
+  const isOpen=body.classList.contains('open');
+  body.classList.toggle('open',!isOpen);
+  if(arrow)arrow.classList.toggle('open',!isOpen);
+}
+
+// ══════════════════════════════════════════════════════
+// MODO
+// ══════════════════════════════════════════════════════
+const MODE_INFO={
+  p:{label:'Personal',   sub:'// ACTIVIDADES PERSONALES — v3.0'},
+  l:{label:'Laboral',    sub:'// ACTIVIDADES LABORALES — v3.0'},
+  e:{label:'Estudiantil',sub:'// ACTIVIDADES ESTUDIANTILES — v3.0'},
+};
+function setMode(m){
+  mode=m;filter='all';SS('mode',m);
+  ['p','l','e'].forEach(x=>document.getElementById('btn'+x.toUpperCase()).classList.toggle('on',x===m));
+  const tag=document.getElementById('modeTag');tag.textContent=MODE_INFO[m].label;tag.className='mtag '+m;
+  document.getElementById('subTitle').textContent=MODE_INFO[m].sub;
+  render();
+}
+function getCats(m){const mm=m||mode;return mm==='p'?catP:mm==='l'?catL:catE;}
+function getCat(id,m){return getCats(m).find(c=>c.id===id)||{label:id,icon:'📌',color:'#94a3b8'};}
+
+// ══════════════════════════════════════════════════════
+// CATEGORÍAS
+// ══════════════════════════════════════════════════════
+function renderCatLists(){
+  ['p','l','e'].forEach(m=>{
+    const el=document.getElementById('catList'+m.toUpperCase());if(!el)return;
+    el.innerHTML=getCats(m).map(c=>`
+      <div class="cat-row">
+        <div class="cat-sw" style="background:${c.color}"></div>
+        <span style="font-size:.88rem">${c.icon}</span>
+        <span class="cat-name">${c.label}</span>
+        <button class="cat-edit-btn" onclick="openCatEdit('${c.id}','${m}')">✏️</button>
+        ${!c.builtin?`<button class="cat-del-btn" onclick="delCat('${c.id}','${m}')">🗑️</button>`:'<span style="width:22px"></span>'}
+      </div>`).join('');
+  });
+}
+function renderCatSelect(selId,val,m){
+  const s=document.getElementById(selId);if(!s)return;
+  s.innerHTML=getCats(m||mode).map(c=>`<option value="${c.id}"${c.id===val?' selected':''}>${c.icon} ${c.label}</option>`).join('');
+}
+function addCat(m){
+  const M=m.toUpperCase();
+  const nom=document.getElementById('catNom'+M).value.trim();
+  const ico=document.getElementById('catIco'+M).value.trim()||'📌';
+  const col=document.getElementById('catCol'+M).value;
+  if(!nom){toast('⚠️ Ingresa un nombre');return;}
+  const id='c'+Date.now();
+  getCats(m).push({id,label:nom,icon:ico,color:col,builtin:false});
+  saveCats();renderCatLists();renderFilterBtns();
+  document.getElementById('catNom'+M).value='';document.getElementById('catIco'+M).value='';
+  toast('🏷️ "'+nom+'" agregada y guardada');
+}
+function delCat(id,m){
+  const list=getCats(m);const cat=list.find(c=>c.id===id);if(!cat)return;
+  if(activities.some(a=>a.tipo===id&&a.modo===m)&&!confirm('¿Eliminar "'+cat.label+'"? Las tareas quedarán sin categoría.'))return;
+  const i=list.findIndex(c=>c.id===id);if(i>=0)list.splice(i,1);
+  const def={p:'otro_p',l:'otro_l',e:'pers_e'};
+  activities.forEach(a=>{if(a.tipo===id&&a.modo===m)a.tipo=def[m]||id;});
+  saveCats();saveActs();renderCatLists();renderFilterBtns();render();toast('🗑️ Categoría eliminada');
+}
+function openCatEdit(id,m){
+  const cat=getCats(m).find(c=>c.id===id);if(!cat)return;
+  document.getElementById('catEditId').value=id;
+  document.getElementById('catEditMode').value=m;
+  document.getElementById('ceName').value=cat.label;
+  document.getElementById('ceIco').value=cat.icon;
+  document.getElementById('ceCol').value=cat.color;
+  document.getElementById('catEditModal').classList.remove('hid');
+}
+function closeCatEdit(){document.getElementById('catEditModal').classList.add('hid');}
+function saveCatEdit(){
+  const id=document.getElementById('catEditId').value;
+  const m=document.getElementById('catEditMode').value;
+  const cat=getCats(m).find(c=>c.id===id);if(!cat)return;
+  const nom=document.getElementById('ceName').value.trim();
+  if(!nom){toast('⚠️ Nombre requerido');return;}
+  cat.label=nom;cat.icon=document.getElementById('ceIco').value.trim()||cat.icon;
+  cat.color=document.getElementById('ceCol').value;
+  saveCats();closeCatEdit();renderCatLists();renderFilterBtns();render();toast('✅ Categoría actualizada');
+}
+
+// ══════════════════════════════════════════════════════
+// FILTROS Y VISTAS
+// ══════════════════════════════════════════════════════
+function renderFilterBtns(){
+  const fg=document.getElementById('filterGroup');fg.innerHTML='';
+  const all=document.createElement('button');all.className='btn'+(filter==='all'?' on':'');
+  all.textContent='Todos';all.onclick=()=>setFilter('all',all);fg.appendChild(all);
+  getCats().forEach(c=>{
+    const b=document.createElement('button');b.className='btn'+(filter===c.id?' on':'');
+    b.textContent=c.icon+' '+c.label;b.onclick=()=>setFilter(c.id,b);fg.appendChild(b);
+  });
+}
+function setFilter(f,btn){
+  filter=f;
+  document.querySelectorAll('#filterGroup .btn').forEach(b=>b.classList.remove('on'));
+  if(btn)btn.classList.add('on');render();
+}
+function setView(v){
+  view=v;
+  document.getElementById('weekView').classList.toggle('hid',v!=='w');
+  document.getElementById('listView').classList.toggle('on',v==='l');
+  document.getElementById('btnSem').classList.toggle('on',v==='w');
+  document.getElementById('btnList').classList.toggle('on',v==='l');
+  render();
+}
+function filteredActs(){
+  let base=activities.filter(a=>a.modo===mode);
+  if(filter!=='all')base=base.filter(a=>a.tipo===filter);
+  return base;
+}
+
+// ══════════════════════════════════════════════════════
+// PANEL AGREGAR
+// ══════════════════════════════════════════════════════
+function toggleAcc(id){
+  if(id==='addPanel'){
+    const p=document.getElementById('addPanel');
+    p.classList.toggle('on');
+    if(p.classList.contains('on')){
+      renderCatSelect('fTipo','',mode);
+      document.getElementById('fFecha').value=TODAY.toISOString().slice(0,10);
+      document.getElementById('addTitle').textContent='＋ Nueva Actividad '+MODE_INFO[mode].label;
+    }
+    return;
+  }
+  const el=document.getElementById(id);if(!el)return;
+  const isVis=el.style.display!=='none';
+  el.style.display=isVis?'none':'block';
+  if(!isVis){renderCatLists();renderPalette();applyBgFromSave();
+    document.getElementById('gAviso').value=String(alarmCfg.aviso);
+    document.getElementById('gNotifDur').value=String(alarmCfg.notifDur);
+    document.getElementById('gSonido').value=alarmCfg.sonido;
+    document.getElementById('gSonidoDur').value=String(alarmCfg.sonidoDur);
+    updateAlarmPrev();updateWelcome();}
+}
+
+// ══════════════════════════════════════════════════════
+// CRUD ACTIVIDADES
+// ══════════════════════════════════════════════════════
+function saveActivity(){
+  const tit=document.getElementById('fTit').value.trim();
+  const fec=document.getElementById('fFecha').value;
+  if(!tit||!fec){toast('⚠️ Título y Fecha requeridos');return;}
+  activities.push({id:nextId++,modo:mode,titulo:tit,
+    tipo:document.getElementById('fTipo').value,fecha:fec,
+    horaIni:document.getElementById('fHi').value,horaFin:document.getElementById('fHf').value,
+    prioridad:document.getElementById('fPrio').value,
+    aviso:parseInt(document.getElementById('fAviso').value)||0,
+    notifDur:parseInt(document.getElementById('fNdur').value)||10,
+    notas:document.getElementById('fNotas').value,
+    done:false,notified:false,creadoEn:new Date().toISOString()});
+  saveActs();
+  ['fTit','fNotas'].forEach(id=>document.getElementById(id).value='');
+  ['fHi','fHf'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('addPanel').classList.remove('on');
+  render();toast('✅ Actividad guardada');
+}
+function openEdit(id){
+  const a=activities.find(x=>x.id===id);if(!a)return;
+  renderCatSelect('eTipo',a.tipo,a.modo);
+  document.getElementById('editId').value=id;
+  document.getElementById('eTit').value=a.titulo;
+  document.getElementById('eFecha').value=a.fecha;
+  document.getElementById('eHi').value=a.horaIni||'';
+  document.getElementById('eHf').value=a.horaFin||'';
+  document.getElementById('ePrio').value=a.prioridad;
+  document.getElementById('eAviso').value=String(a.aviso||alarmCfg.aviso);
+  document.getElementById('eNdur').value=String(a.notifDur||alarmCfg.notifDur);
+  document.getElementById('eNotas').value=a.notas||'';
+  document.getElementById('editModal').classList.remove('hid');
+}
+function closeEdit(){document.getElementById('editModal').classList.add('hid');}
+function saveEdit(){
+  const id=parseInt(document.getElementById('editId').value);
+  const a=activities.find(x=>x.id===id);if(!a)return;
+  const tit=document.getElementById('eTit').value.trim();
+  const fec=document.getElementById('eFecha').value;
+  if(!tit||!fec){toast('⚠️ Título y Fecha requeridos');return;}
+  Object.assign(a,{titulo:tit,tipo:document.getElementById('eTipo').value,fecha:fec,
+    horaIni:document.getElementById('eHi').value,horaFin:document.getElementById('eHf').value,
+    prioridad:document.getElementById('ePrio').value,
+    aviso:parseInt(document.getElementById('eAviso').value)||0,
+    notifDur:parseInt(document.getElementById('eNdur').value)||10,
+    notas:document.getElementById('eNotas').value,notified:false,
+    editadoEn:new Date().toISOString()});
+  saveActs();closeEdit();render();toast('✏️ Actividad actualizada');
+}
+function toggleDone(id){
+  const a=activities.find(x=>x.id===id);
+  if(a){a.done=!a.done;a.completadoEn=a.done?new Date().toISOString():null;saveActs();render();}
+}
+function delAct(id){
+  if(!confirm('¿Eliminar esta actividad?'))return;
+  activities=activities.filter(x=>x.id!==id);saveActs();render();toast('🗑️ Eliminada');
+}
+
+// ══════════════════════════════════════════════════════
+// STATS
+// ══════════════════════════════════════════════════════
+function updateStats(){
+  const base=activities.filter(a=>a.modo===mode);
+  const comp=base.filter(a=>a.done);
+  const hoy=base.filter(a=>a.fecha===TODAY.toISOString().slice(0,10));
+  document.getElementById('sTot').textContent=base.length;
+  document.getElementById('sPend').textContent=base.length-comp.length;
+  document.getElementById('sComp').textContent=comp.length;
+  document.getElementById('sHoy').textContent=hoy.length;
+  document.getElementById('sPct').textContent=base.length?Math.round(comp.length/base.length*100)+'%':'0%';
+}
+
+// ══════════════════════════════════════════════════════
+// SEMANA
+// ══════════════════════════════════════════════════════
+function getWeekDates(off=0){
+  const s=new Date(TODAY);const d=s.getDay();
+  s.setDate(s.getDate()-d+(d===0?-6:1)+off*7);
+  return Array.from({length:7},(_,i)=>{const dt=new Date(s);dt.setDate(s.getDate()+i);return dt;});
+}
+function changeWeek(dir){wkOff+=dir;render();}
+function renderWeek(){
+  const dates=getWeekDates(wkOff),ts=TODAY.toISOString().slice(0,10);
+  const s=dates[0],e=dates[6];
+  document.getElementById('weekLabel').textContent=
+    s.getDate()+' '+MESES[s.getMonth()].slice(0,3)+' — '+e.getDate()+' '+MESES[e.getMonth()].slice(0,3)+' '+e.getFullYear();
+  const fa=filteredActs(),grid=document.getElementById('weekGrid');grid.innerHTML='';
+  dates.forEach(dt=>{
+    const ds=dt.toISOString().slice(0,10),isT=ds===ts;
+    const acts=fa.filter(a=>a.fecha===ds).sort((a,b)=>(a.horaIni||'99').localeCompare(b.horaIni||'99'));
+    const col=document.createElement('div');col.className='dc'+(isT?' tod':'');
+    col.innerHTML=`<div class="dh"><div class="dn-s">${DIAS[dt.getDay()]}</div><div class="dn-n">${dt.getDate()}</div></div><div class="db">${acts.length?'':'<div class="empty">·</div>'}</div>`;
+    grid.appendChild(col);
+    const body=col.querySelector('.db');
+    acts.forEach(a=>{
+      const cat=getCat(a.tipo,a.modo);
+      const card=document.createElement('div');card.className='ac'+(a.done?' done':'');
+      card.style.cssText=`background:${cat.color}18;border-color:${cat.color};color:${cat.color};`;
+      card.innerHTML=`<div class="at">${a.horaIni?a.horaIni+(a.horaFin?'–'+a.horaFin:''):'Todo el día'}</div><div class="tt">${cat.icon} ${a.titulo}</div><div class="tp">${PRIO[a.prioridad]} ${cat.label}</div><div class="caa"><button class="cab" onclick="event.stopPropagation();openEdit(${a.id})">✏️</button><button class="cab" onclick="event.stopPropagation();delAct(${a.id})">✕</button></div>`;
+      card.onclick=()=>toggleDone(a.id);
+      card.onmouseenter=ev=>showTip(ev,a);
+      card.onmouseleave=hideTip;
+      body.appendChild(card);
+    });
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// LISTA
+// ══════════════════════════════════════════════════════
+function renderList(){
+  const fa=filteredActs(),ts=TODAY.toISOString().slice(0,10);
+  const ms=new Date(TODAY.getTime()+86400000).toISOString().slice(0,10);
+  const se=new Date(TODAY.getTime()+7*86400000).toISOString().slice(0,10);
+  const grps={
+    venc:{l:'Vencidas',  c:'#f87171',i:[]},
+    hoy: {l:'Hoy',      c:'#34d399',i:[]},
+    man: {l:'Mañana',   c:'#60a5fa',i:[]},
+    sem: {l:'Esta Semana',c:'#a78bfa',i:[]},
+    fut: {l:'Próximas', c:'#f59e0b',i:[]},
+    comp:{l:'Completadas',c:'#4b5563',i:[]},
+  };
+  fa.forEach(a=>{
+    if(a.done){grps.comp.i.push(a);return;}
+    if(a.fecha<ts)grps.venc.i.push(a);
+    else if(a.fecha===ts)grps.hoy.i.push(a);
+    else if(a.fecha===ms)grps.man.i.push(a);
+    else if(a.fecha<=se)grps.sem.i.push(a);
+    else grps.fut.i.push(a);
+  });
+  const cont=document.getElementById('listContent');cont.innerHTML='';
+  Object.values(grps).forEach(g=>{
+    if(!g.i.length)return;
+    g.i.sort((a,b)=>(a.fecha+(a.horaIni||'')).localeCompare(b.fecha+(b.horaIni||'')));
+    const div=document.createElement('div');div.className='lg';
+    div.innerHTML=`<div class="lgh"><div class="dot" style="background:${g.c}"></div><h3>${g.l} <span style="color:var(--muted);font-weight:400">(${g.i.length})</span></h3></div>`;
+    g.i.forEach(a=>{
+      const cat=getCat(a.tipo,a.modo);
+      const li=document.createElement('div');li.className='li'+(a.done?' done':'');
+      li.innerHTML=`<div class="chk" onclick="event.stopPropagation();toggleDone(${a.id})">${a.done?'✓':''}</div><div class="ii"><div class="it">${cat.icon} ${a.titulo}</div><div class="im">${a.fecha}${a.horaIni?' · '+a.horaIni+(a.horaFin?'–'+a.horaFin:''):''} · ${PRIO[a.prioridad]} ${a.prioridad} · ⏰${a.aviso||alarmCfg.aviso}min</div>${a.notas?'<div class="im" style="font-style:italic;margin-top:.1rem;">'+a.notas+'</div>':''}</div><span class="ibadge" style="background:${cat.color}20;border:1px solid ${cat.color}50;color:${cat.color}">${cat.label}</span><div class="iac"><button class="iab" onclick="event.stopPropagation();openEdit(${a.id})">✏️ Editar</button><button class="iab" style="border-color:#f87171;color:#f87171;" onclick="event.stopPropagation();delAct(${a.id})">✕</button></div>`;
+      div.appendChild(li);
+    });
+    cont.appendChild(div);
+  });
+  const pb=document.getElementById('progBars');pb.innerHTML='';
+  getCats().forEach(cat=>{
+    const all=activities.filter(a=>a.tipo===cat.id&&a.modo===mode);
+    const comp=all.filter(a=>a.done);if(!all.length)return;
+    const pct=Math.round(comp.length/all.length*100);
+    pb.innerHTML+=`<div class="prw"><div class="prl">${cat.icon} ${cat.label}</div><div class="prt"><div class="prf" style="width:${pct}%;background:${cat.color}"></div></div><div class="prp">${pct}%</div></div>`;
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// TOOLTIP — se oculta a los 5 segundos
+// ══════════════════════════════════════════════════════
+function showTip(e,a){
+  clearTimeout(tipTimer);
+  const cat=getCat(a.tipo,a.modo),t=document.getElementById('tooltip');
+  t.innerHTML=`<strong>${a.titulo}</strong><br>${a.fecha}${a.horaIni?' · '+a.horaIni:''}<br>${PRIO[a.prioridad]} ${a.prioridad} · ⏰${a.aviso||alarmCfg.aviso}min${a.notas?'<br><em>'+a.notas+'</em>':''}`;
+  t.style.left=(e.clientX+13)+'px';t.style.top=(e.clientY-34)+'px';
+  t.classList.add('on');
+  tipTimer=setTimeout(()=>t.classList.remove('on'),5000);
+}
+function hideTip(){clearTimeout(tipTimer);tipTimer=setTimeout(()=>document.getElementById('tooltip').classList.remove('on'),200);}
+
+// ══════════════════════════════════════════════════════
+// ALARMA
+// ══════════════════════════════════════════════════════
+function getAC(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+function playSound(type,dur){
+  try{
+    const ctx=getAC();
+    const P={beep:[{f:880,d:.12,g:.4},{f:880,d:.12,g:.4}],bell:[{f:1047,d:.6,g:.5},{f:1175,d:.4,g:.3}],urgent:[{f:1200,d:.08,g:.5},{f:800,d:.08,g:.5},{f:1200,d:.08,g:.5},{f:800,d:.08,g:.5}],chime:[{f:523,d:.3,g:.3},{f:659,d:.3,g:.3},{f:784,d:.3,g:.3},{f:1047,d:.5,g:.4}]};
+    const seq=P[type]||P.beep;const sD=seq.reduce((s,n)=>s+n.d+.08,0)+.15;
+    const rep=Math.max(1,Math.ceil(dur/sD));const end=ctx.currentTime+dur;let t=ctx.currentTime+.05;
+    for(let r=0;r<rep&&t<end;r++){seq.forEach(n=>{if(t>=end)return;const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.type=(type==='bell'||type==='chime')?'sine':'square';o.frequency.setValueAtTime(n.f,t);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(n.g,t+.01);g.gain.exponentialRampToValueAtTime(.001,t+n.d);o.start(t);o.stop(t+n.d+.01);t+=n.d+.08;});t+=.15;}
+  }catch(e){console.warn('Audio:',e);}
+}
+function testAlarm(){const s=document.getElementById('gSonido').value;const d=parseInt(document.getElementById('gSonidoDur').value);if(s==='none'){toast('🔇 Sin sonido');return;}playSound(s,d);toast('▶ '+s+' ('+d+'s)');}
+function updateAlarmPrev(){
+  const sn={none:'Sin sonido',beep:'Beep',bell:'Campana',urgent:'Urgente',chime:'Carillón'};
+  const s=document.getElementById('gSonido').value;
+  const d=document.getElementById('gSonidoDur').value;
+  const a=document.getElementById('gAviso').value;
+  const nd=document.getElementById('gNotifDur').value;
+  document.getElementById('alarmPrev').textContent=`Aviso: ${a}min antes | Notif visible: ${nd}s | Sonido: ${sn[s]} (${d}s)`;
+}
+
+// ══════════════════════════════════════════════════════
+// NOTIFICACIONES
+// ══════════════════════════════════════════════════════
+function showNotif(act){
+  const dur=Math.min(60,Math.max(5,act.notifDur||alarmCfg.notifDur));
+  const cat=getCat(act.tipo,act.modo);
+  if(alarmCfg.sonido!=='none')playSound(alarmCfg.sonido,alarmCfg.sonidoDur);
+  const id='n'+act.id+'_'+Date.now();
+  const cont=document.getElementById('notifContainer');
+  const off=cont.children.length;
+  const box=document.createElement('div');box.className='nbox';box.id=id;
+  box.style.top=(1.3+off*11.5)+'rem';
+  const ml=act.modo==='l'?'💼 LABORAL':act.modo==='e'?'🎓 ESTUDIANTIL':'👤 PERSONAL';
+  box.innerHTML=`<div class="nhdr"><span class="ntb">🔔 ${ml}</span><button class="nclose" onclick="closeNotif('${id}')">✕</button></div><div class="nico">${cat.icon}</div><div class="nat">${act.titulo}</div><div class="nme">${act.fecha}${act.horaIni?' · '+act.horaIni+(act.horaFin?' – '+act.horaFin:''):''}</div><div class="nme">${PRIO[act.prioridad]} ${act.prioridad}${act.notas?' · '+act.notas:''}</div><div class="nbar"><div class="nbf" id="nf${id}" style="width:100%;transition:width ${dur}s linear"></div></div><div class="ncd" id="nc${id}">${dur}s</div><div class="nft"><button class="nb2 ok" onclick="closeNotif('${id}')">✓ OK</button><button class="nb2" onclick="snz('${id}',${act.id})">⏱ +5min</button><button class="nb2" onclick="doneN(${act.id},'${id}')">✅ Listo</button></div>`;
+  cont.appendChild(box);
+  setTimeout(()=>{const f=document.getElementById('nf'+id);if(f)f.style.width='0%';},60);
+  let rem=dur;const iv=setInterval(()=>{rem--;const c=document.getElementById('nc'+id);if(c)c.textContent=rem+'s';if(rem<=0){clearInterval(iv);closeNotif(id);}},1000);
+  activeNotifs[id]={t:iv};
+}
+function closeNotif(id){const b=document.getElementById(id);if(!b)return;if(activeNotifs[id]){clearInterval(activeNotifs[id].t);delete activeNotifs[id];}b.classList.add('cl');setTimeout(()=>{b.remove();reposNotifs();},300);}
+function reposNotifs(){const c=document.getElementById('notifContainer');Array.from(c.children).forEach((b,i)=>{b.style.transition='top .26s ease';b.style.top=(1.3+i*11.5)+'rem';});}
+function snz(nid,aid){closeNotif(nid);setTimeout(()=>{const a=activities.find(x=>x.id===aid);if(a)showNotif(a);},300000);toast('⏱ +5 minutos');}
+function doneN(aid,nid){const a=activities.find(x=>x.id===aid);if(a){a.done=true;a.completadoEn=new Date().toISOString();saveActs();}closeNotif(nid);render();toast('✅ Completada');}
+function checkAlarms(){
+  const now=new Date(),ts=now.toISOString().slice(0,10),nm=now.getHours()*60+now.getMinutes();
+  activities.forEach(act=>{
+    if(act.done||!act.horaIni||act.notified||act.fecha!==ts)return;
+    const[h,m]=act.horaIni.split(':').map(Number);const am=h*60+m;
+    const av=act.aviso||alarmCfg.aviso;const diff=am-nm;
+    if(diff<=av&&diff>av-1){act.notified=true;saveActs();showNotif(act);}
+  });
+}
+setInterval(checkAlarms,30000);
+
+// ══════════════════════════════════════════════════════
+// EXPORTAR CSV CON RANGO DE FECHAS
+// ══════════════════════════════════════════════════════
+function openCsvModal(){
+  const hoy=TODAY.toISOString().slice(0,10);
+  const fin=new Date(TODAY);fin.setMonth(fin.getMonth()+1);
+  document.getElementById('csvDesde').value='';
+  document.getElementById('csvHasta').value='';
+  document.getElementById('csvModo').value='all';
+  document.getElementById('csvModal').classList.remove('hid');
+  updateCsvPreview();
+}
+function closeCsvModal(){document.getElementById('csvModal').classList.add('hid');}
+function updateCsvPreview(){
+  const desde=document.getElementById('csvDesde').value;
+  const hasta=document.getElementById('csvHasta').value;
+  const modo=document.getElementById('csvModo').value;
+  let base=activities;
+  if(modo!=='all')base=base.filter(a=>a.modo===modo);
+  if(desde)base=base.filter(a=>a.fecha>=desde);
+  if(hasta)base=base.filter(a=>a.fecha<=hasta);
+  const comp=base.filter(a=>a.done).length;
+  document.getElementById('csvPreview').textContent=
+    `Vista previa: ${base.length} actividades (${comp} completadas, ${base.length-comp} pendientes)${desde||hasta?' en el rango seleccionado':' — todas las fechas'}`;
+}
+['csvDesde','csvHasta','csvModo'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el)el.addEventListener('change',updateCsvPreview);
+});
+function doExportCSV(){
+  const desde=document.getElementById('csvDesde').value;
+  const hasta=document.getElementById('csvHasta').value;
+  const modo=document.getElementById('csvModo').value;
+  let base=activities.slice().sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  if(modo!=='all')base=base.filter(a=>a.modo===modo);
+  if(desde)base=base.filter(a=>a.fecha>=desde);
+  if(hasta)base=base.filter(a=>a.fecha<=hasta);
+  if(!base.length){toast('⚠️ No hay actividades en ese rango');return;}
+  const hdrs=['ID','Modo','Título','Categoría','Ícono','Fecha','Hora Inicio','Hora Fin','Prioridad','Estado','Aviso (min)','Duración Notif (seg)','Notas','Creado En','Completado En'];
+  const rows=base.map(a=>{
+    const cat=getCat(a.tipo,a.modo);
+    const modeLabel={p:'Personal',l:'Laboral',e:'Estudiantil'}[a.modo]||a.modo;
+    return [a.id,modeLabel,
+      `"${(a.titulo||'').replace(/"/g,'""')}"`,
+      `"${cat.label}"`,cat.icon,
+      a.fecha,a.horaIni||'',a.horaFin||'',a.prioridad,
+      a.done?'Completada':'Pendiente',
+      a.aviso||alarmCfg.aviso,a.notifDur||alarmCfg.notifDur,
+      `"${(a.notas||'').replace(/"/g,'""')}"`,
+      a.creadoEn?a.creadoEn.slice(0,16).replace('T',' '):'',
+      a.completadoEn?a.completadoEn.slice(0,16).replace('T',' '):'',
+    ].join(',');
+  });
+  const csv='\uFEFF'+hdrs.join(',')+'\n'+rows.join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;
+  const rango=(desde?desde:'inicio')+'_al_'+(hasta?hasta:'hoy');
+  a.download=`agenda_${modo==='all'?'completa':modo}_${rango}.csv`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  closeCsvModal();
+  toast(`📊 CSV: ${base.length} actividades exportadas`);
+}
+
+// ══════════════════════════════════════════════════════
+// SALIDA SEGURA
+// ══════════════════════════════════════════════════════
+function exitApp(){
+  saveActs();
+  if(confirm('¿Salir de la Agenda?\n\nTodos los datos están guardados y se conservarán.')){
+    toast('👋 ¡Hasta luego!');setTimeout(()=>window.close(),1000);
+  }
+}
+window.addEventListener('beforeunload',()=>{saveActs();swSendMessage({type:'APP_CLOSED',alarms:buildAlarmList()});});
+
+// TOAST
+function toast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3000);}
+
+// ══════════════════════════════════════════════════════
+// PWA — SERVICE WORKER + NOTIFICACIONES
+// ══════════════════════════════════════════════════════
+let swReg = null;
+let deferredInstallPrompt = null;
+
+// ── Registro del Service Worker ──
+async function registerSW() {
+  if (!('serviceWorker' in navigator)) {
+    console.warn('[PWA] Service Worker no soportado en este navegador');
+    return;
+  }
+  try {
+    swReg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
+    console.log('[PWA] Service Worker registrado:', swReg.scope);
+
+    // Escuchar mensajes del SW
+    navigator.serviceWorker.addEventListener('message', handleSWMessage);
+
+    // Actualización disponible
+    swReg.addEventListener('updatefound', () => {
+      const newWorker = swReg.installing;
+      newWorker.addEventListener('statechange', () => {
+        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+          toast('🔄 Nueva versión disponible — Recarga para actualizar');
+        }
+      });
+    });
+
+    return swReg;
+  } catch (e) {
+    console.error('[PWA] Error registrando SW:', e);
+  }
+}
+
+// ── Enviar mensaje al SW ──
+function swSendMessage(msg) {
+  if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage(msg);
+  } else if (swReg && swReg.active) {
+    swReg.active.postMessage(msg);
+  }
+}
+
+// ── Recibir mensajes del SW ──
+function handleSWMessage(event) {
+  const { type, alarmId, actId } = event.data || {};
+  switch (type) {
+    case 'ALARM_FIRED':
+      // El SW disparó una alarma, marcarla como notificada en la app
+      const act = activities.find(a => a.id === alarmId);
+      if (act) { act.notified = true; saveActs(); render(); }
+      break;
+    case 'MARK_DONE':
+      const actD = activities.find(a => a.id === actId);
+      if (actD) { actD.done = true; actD.completadoEn = new Date().toISOString(); saveActs(); render(); }
+      toast('✅ Actividad completada desde notificación');
+      break;
+    case 'SNOOZE':
+      toast('⏱ Recordatorio pospuesto 5 minutos');
+      break;
+    case 'OPEN_FROM_NOTIF':
+      // Enfocar la actividad correspondiente
+      if (actId) {
+        const a = activities.find(x => x.id === actId);
+        if (a && a.modo !== mode) setMode(a.modo);
+        toast('📅 Abierto desde notificación');
+      }
+      break;
+  }
+}
+
+// ── Construir lista de alarmas para el SW ──
+function buildAlarmList() {
+  const today = new Date().toISOString().slice(0, 10);
+  // Incluir alarmas de hoy y futuras no notificadas
+  return activities
+    .filter(a => !a.done && !a.notified && a.horaIni && a.fecha >= today)
+    .map(a => {
+      const cat = getCat(a.tipo, a.modo);
+      return {
+        id:       a.id,
+        actId:    a.id,
+        titulo:   a.titulo,
+        fecha:    a.fecha,
+        hora:     a.horaIni,
+        modo:     a.modo,
+        prioridad:a.prioridad,
+        aviso:    a.aviso || alarmCfg.aviso,
+        notas:    a.notas || '',
+        catIcon:  cat.icon,
+        duracion: a.notifDur || alarmCfg.notifDur,
+        done:     a.done,
+        notified: a.notified,
+      };
+    });
+}
+
+// ── Sincronizar alarmas con el SW ──
+function syncAlarmsWithSW() {
+  const alarms = buildAlarmList();
+  swSendMessage({ type: 'SYNC_ALARMS', alarms });
+  console.log('[PWA] Alarmas sincronizadas con SW:', alarms.length);
+}
+
+// ── Permisos de notificación ──
+async function requestNotifPermission() {
+  if (!('Notification' in window)) {
+    toast('⚠️ Notificaciones no soportadas en este navegador');
+    return false;
+  }
+  if (Notification.permission === 'granted') return true;
+  if (Notification.permission === 'denied') {
+    document.getElementById('notifDeniedBanner').style.display = 'flex';
+    return false;
+  }
+  try {
+    const result = await Notification.requestPermission();
+    if (result === 'granted') {
+      document.getElementById('notifDeniedBanner').style.display = 'none';
+      document.getElementById('pwaBanner').style.display = 'flex';
+      syncAlarmsWithSW();
+      toast('✅ Notificaciones activadas — Alarmas en segundo plano listas');
+      return true;
+    } else {
+      document.getElementById('notifDeniedBanner').style.display = 'block';
+      toast('⚠️ Sin permisos de notificación — Las alarmas solo funcionarán con la app abierta');
+      return false;
+    }
+  } catch (e) {
+    console.error('[PWA] Error pidiendo permiso:', e);
+    return false;
+  }
+}
+
+// ── Instalar la PWA ──
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  // Mostrar banner de instalación si no está ya instalada
+  if (!window.matchMedia('(display-mode: standalone)').matches) {
+    setTimeout(() => {
+      document.getElementById('installBanner').style.display = 'block';
+    }, 3000);
+  }
+});
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('installBanner').style.display = 'none';
+  deferredInstallPrompt = null;
+  toast('🎉 ¡Agenda instalada! Las alarmas funcionarán en segundo plano');
+  requestNotifPermission();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  const installBtn = document.getElementById('installBtn');
+  if (installBtn) {
+    installBtn.addEventListener('click', async () => {
+      if (!deferredInstallPrompt) {
+        toast('ℹ️ Usa el menú del navegador → "Añadir a pantalla de inicio"');
+        return;
+      }
+      deferredInstallPrompt.prompt();
+      const { outcome } = await deferredInstallPrompt.userChoice;
+      if (outcome === 'accepted') {
+        document.getElementById('installBanner').style.display = 'none';
+      }
+      deferredInstallPrompt = null;
+    });
+  }
+});
+
+// ── Prueba de notificación ──
+async function pwaTestNotif() {
+  const ok = await requestNotifPermission();
+  if (!ok) return;
+  swSendMessage({ type: 'TEST_NOTIFICATION' });
+  toast('🔔 Notificación de prueba enviada');
+}
+
+// ── Periodic Background Sync (Chrome Android) ──
+async function registerPeriodicSync() {
+  if (!swReg) return;
+  try {
+    const status = await navigator.permissions.query({ name: 'periodic-background-sync' });
+    if (status.state === 'granted') {
+      await swReg.periodicSync.register('alarm-check', { minInterval: 60 * 1000 }); // cada 1 min
+      console.log('[PWA] Periodic Background Sync registrado');
+    }
+  } catch (e) {
+    console.log('[PWA] Periodic Sync no disponible:', e.message);
+  }
+}
+
+// ── Detectar si ya está instalada ──
+function isPWAInstalled() {
+  return window.matchMedia('(display-mode: standalone)').matches ||
+         window.navigator.standalone === true;
+}
+
+// ── Actualizar lista de alarmas cada vez que cambian las actividades ──
+const _origSaveActs = saveActs;
+function saveActs() {
+  _origSaveActs();
+  // Sincronizar con SW de forma diferida
+  clearTimeout(window._syncTimer);
+  window._syncTimer = setTimeout(syncAlarmsWithSW, 500);
+}
+
+// ── INIT PWA ──
+async function initPWA() {
+  // 1. Registrar Service Worker
+  await registerSW();
+
+  // 2. Verificar estado de notificaciones
+  if ('Notification' in window) {
+    if (Notification.permission === 'granted') {
+      document.getElementById('pwaBanner').style.display = 'flex';
+      document.getElementById('pwaStatusText').textContent = '🔔 Notificaciones activas — Alarmas en segundo plano';
+      syncAlarmsWithSW();
+    } else if (Notification.permission === 'denied') {
+      document.getElementById('notifDeniedBanner').style.display = 'block';
+    } else {
+      // No decidido aún — pedir permiso amablemente después de 5 seg
+      setTimeout(async () => {
+        const granted = await requestNotifPermission();
+        if (granted) syncAlarmsWithSW();
+      }, 5000);
+    }
+  }
+
+  // 3. Si ya está instalada como PWA
+  if (isPWAInstalled()) {
+    document.getElementById('installBanner').style.display = 'none';
+    console.log('[PWA] Ejecutando como app instalada');
+  }
+
+  // 4. Periodic Background Sync
+  await registerPeriodicSync();
+
+  // 5. Notificar al SW que la app está abierta
+  swSendMessage({ type: 'APP_OPEN' });
+
+  // 6. Al volver a primer plano, resincronizar
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      swSendMessage({ type: 'APP_OPEN' });
+      syncAlarmsWithSW();
+    } else {
+      swSendMessage({ type: 'APP_CLOSED', alarms: buildAlarmList() });
+    }
+  });
+
+  console.log('[PWA] Inicialización completa');
+}
+
+// ══════════════════════════════════════════════════════
+// RENDER Y INIT
+// ══════════════════════════════════════════════════════
+function render(){updateStats();renderFilterBtns();if(view==='w')renderWeek();else renderList();}
+
+function init(){
+  loadAll();
+  if(currentPaleta>0){const p=PALETAS[currentPaleta];document.documentElement.style.setProperty('--primary',p.pr);document.documentElement.style.setProperty('--g1',p.g1);document.documentElement.style.setProperty('--g2',p.g2);}
+  applyBgFromSave();
+  ['p','l','e'].forEach(x=>document.getElementById('btn'+x.toUpperCase()).classList.toggle('on',x===mode));
+  const tag=document.getElementById('modeTag');tag.textContent=MODE_INFO[mode].label;tag.className='mtag '+mode;
+  document.getElementById('subTitle').textContent=MODE_INFO[mode].sub;
+  updateWelcome();
+  document.getElementById('fFecha').value=TODAY.toISOString().slice(0,10);
+  updateAlarmPrev();
+  if(!LS('acts')){
+    const dd=d=>{const dt=new Date(TODAY);dt.setDate(TODAY.getDate()+d);return dt.toISOString().slice(0,10);};
+    activities=[
+      {id:1,modo:'l',titulo:'Revisión Sala A',         tipo:'rev_maq', fecha:dd(0),horaIni:'08:00',horaFin:'10:00',prioridad:'alta', aviso:15,notifDur:10,notas:'12 máquinas. Tablet.',done:false,notified:false,creadoEn:new Date().toISOString()},
+      {id:2,modo:'l',titulo:'Cambio de Juegos Slot 7', tipo:'cambio_j',fecha:dd(1),horaIni:'11:00',horaFin:'12:00',prioridad:'alta', aviso:20,notifDur:15,notas:'Dragon Fortune v3.',done:false,notified:false,creadoEn:new Date().toISOString()},
+      {id:3,modo:'p',titulo:'Misa Dominical',          tipo:'misa',    fecha:dd(0),horaIni:'10:00',horaFin:'11:00',prioridad:'alta', aviso:15,notifDur:10,notas:'Iglesia del barrio.',done:false,notified:false,creadoEn:new Date().toISOString()},
+      {id:4,modo:'p',titulo:'Fútbol con Amigos',       tipo:'deporte', fecha:dd(1),horaIni:'07:00',horaFin:'09:00',prioridad:'media',aviso:20,notifDur:10,notas:'Cancha del barrio.',done:false,notified:false,creadoEn:new Date().toISOString()},
+      {id:5,modo:'e',titulo:'Quiz Evaluación Formativa',tipo:'examen', fecha:dd(1),horaIni:'10:00',horaFin:'11:00',prioridad:'alta', aviso:20,notifDur:15,notas:'Temas: ADDIE y objetivos.',done:false,notified:false,creadoEn:new Date().toISOString()},
+      {id:6,modo:'e',titulo:'Entrega Proyecto Final',  tipo:'proyecto',fecha:dd(3),horaIni:'23:59',horaFin:'',     prioridad:'alta', aviso:30,notifDur:20,notas:'Subir PDF a Moodle.',done:false,notified:false,creadoEn:new Date().toISOString()},
+    ];
+    nextId=7;saveActs();
+  }
+  render();
+  // Iniciar PWA después del render
+  initPWA();
+}
+init();
+</script>
+</body>
+</html>
